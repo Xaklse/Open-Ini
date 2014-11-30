@@ -1,0 +1,51 @@
+
+#Ignore OS generated files.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+*~
+
+#Ignore files created by Visual Studio.
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.ipch
+*.vspscc
+*.sdf
+*.opensdf
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.lib
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+
+#My ignored files/folders.
+Compiled*/
+Temp*/
+Source/3rdp/Boost/*
+Source/3rdp/Poco/*
+Source/3rdp/WxWidgets/*
+
+#My exceptions.
+!VERSION
