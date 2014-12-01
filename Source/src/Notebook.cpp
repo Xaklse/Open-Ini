@@ -48,9 +48,11 @@ void Notebook::OnPageChanged(wxAuiNotebookEvent& event)
 	//Find the selected page.
 	const auto pPage = static_cast<Page*>(GetPage(event.GetSelection()));
 
+	const string title = pPage->FetchHint() + " - " +
+		Application::Get()->ApplicationName();
+
 	//Change the title of the main window.
-	mpWindow->SetTitle(wxString(pPage->FetchHint() + " - " +
-		Application::Get()->ApplicationName()));
+	mpWindow->SetTitle(wxString(title.c_str(), wxConvUTF8));
 }
 
 void Notebook::OnPageClose(wxAuiNotebookEvent& event)
@@ -120,7 +122,7 @@ void Notebook::OpenPage(const std::shared_ptr<FileIni>& pFile)
 
 void Notebook::SetPageTitle(Page* pPage, const string& title)
 {
-	if (!SetPageText(GetPageIndex(pPage), wxString(title)))
+	if (!SetPageText(GetPageIndex(pPage), wxString(title.c_str(), wxConvUTF8)))
 	{
 		LOG("Set page title failed.");
 	}
@@ -128,7 +130,8 @@ void Notebook::SetPageTitle(Page* pPage, const string& title)
 
 void Notebook::SetPageHint(Page* pPage, const string& hint)
 {
-	if (!SetPageToolTip(GetPageIndex(pPage), wxString(hint)))
+	if (!SetPageToolTip(GetPageIndex(pPage),
+		wxString(hint.c_str(), wxConvUTF8)))
 	{
 		LOG("Set page hint failed.");
 	}
