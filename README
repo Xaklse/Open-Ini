@@ -15,3 +15,21 @@ Uses the following libraries placed in:
 
 
 Application.cpp has the application entry point.
+
+
+DONE:
+- Main window with tabs support.
+- Logging system.
+- Memory leak detection.
+- Exception handling.
+- Command-line arguments support.
+- Open/close .ini file.
+
+
+TODO:
+- Smart presentation of contents of .ini file.
+- Save .ini file.
+- Undo/redo change.
+- Show meta-data associated to field.
+- Configurable settings.
+- Instant search.

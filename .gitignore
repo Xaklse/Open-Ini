@@ -41,6 +41,7 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 
 #My ignored files/folders.
+*.ini
 Compiled*/
 Temp*/
 Source/3rdp/Boost/*
