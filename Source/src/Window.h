@@ -4,47 +4,50 @@
 
 
 #include "Globals.h"
+#include "SfWindow.h"
 
-#include "wx/wxprec.h"
-#if !defined(WX_PRECOMP)
-	#include "wx/wx.h"
-#endif
-#include "wx/aui/aui.h"
+#include "Poco/NotificationQueue.h"
 
 
-NAMESPACE_BEGIN(Oini)
+OINI_NAMESPACE_BEGIN(Oini)
 
-class FileIni;
-class Notebook;
-
-
-class Window : public wxFrame, private boost::noncopyable
+class Window : public SfWindow, private boost::noncopyable
 {
 public:
 	Window();
 	virtual ~Window();
 
 public:
-	void Initialize();
-
-private:
-	wxDECLARE_EVENT_TABLE();
-
-private:
-	void OnAbout(wxCommandEvent& event);
-	void OnExit(wxCommandEvent& event);
-	void OnMouseMiddleClick(wxMouseEvent& event);
-	void OnOpen(wxCommandEvent& event);
+	virtual void Initialize();
+	virtual bool Run();
+	virtual void Shutdown();
 
 public:
-	void OpenFile(const std::shared_ptr<FileIni> pFile);
+	virtual void DrawGraphics() {}
+	virtual void HandleEvent(sf::Event event) {}
+	virtual void HandleNotification(class Notification* pNotification) {}
+
+public:
+	void Close();
+
+protected:
+	virtual void Create(uint width, uint height, const string& title) override;
+
+protected:
+	void ForceRedraw(bool forceRedraw);
+
+protected:
+	bool mKeepOpen = true;
+	uint mRedrawGraphics = 0u;
+	sf::Color mBackgroundColor = sf::Color::Black;
+	Poco::NotificationQueue mNotifications;
+	std::vector<std::shared_ptr<class Popup>> mpPopups;
 
 private:
-	Notebook* mpNotebook;
-	wxAuiManager mUiManager;
+	typedef SfWindow super;
 };
 
-NAMESPACE_END //Oini
+OINI_NAMESPACE_END(Oini)
 
 
 #endif //OINI_WINDOW_H

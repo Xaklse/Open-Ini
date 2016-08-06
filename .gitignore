@@ -45,8 +45,10 @@ _ReSharper*/
 Compiled*/
 Temp*/
 Source/3rdp/Boost/*
+Source/3rdp/ImGui/*
 Source/3rdp/Poco/*
-Source/3rdp/WxWidgets/*
+Source/3rdp/SFML/*
+Source/3rdp/TinyFD/*
 
 #My exceptions.
 !VERSION

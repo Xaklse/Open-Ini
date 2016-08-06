@@ -2,65 +2,103 @@
 #include "Application.h"
 #include "Exception.h"
 #include "FileIni.h"
-#include "Window.h"
+#include "Font.h"
+#include "Logger.h"
+#include "WindowMain.h"
 
-#include "Poco/DateTimeFormat.h"
 #include "Poco/Environment.h"
-#include "Poco/File.h"
-#include "Poco/FileChannel.h"
-#include "Poco/Path.h"
 #if defined(OINI_DEBUG_LOG_TO_DEBUGGER)
 	#include "Poco/Debugger.h"
 #endif
 
-#include "wx/cmdline.h"
 
 
-NAMESPACE_BEGIN(Oini)
+POCO_APP_MAIN(Oini::Application)
+
+#if defined(OINI_PLATFORM_WINDOWS)
+/**
+ * The entry point for any window application based on Windows.
+ * @param instanceHandle	integer which identifies this application
+ * @param hPrevInstance		obsolete
+ * @param lpCommandLine		long pointer to the string that has the command line
+ * @param nShowCommand		indicates how the window is to appear when created
+ * @return					exit value of the program; 0 means no errors
+ */
+#if !defined(POCO_NO_WSTRING)
+int WINAPI wWinMain(HINSTANCE instanceHandle, HINSTANCE hPrevInstance,
+	PWSTR lpCommandLine, int nShowCommand)
+#else
+int WINAPI WinMain(HINSTANCE instanceHandle, HINSTANCE hPrevInstance,
+	LPSTR lpCommandLine, int nShowCommand)
+#endif
+{
+	//Avoid compiler warnings about unreferenced parameters.
+	UNREFERENCED_PARAMETER(instanceHandle);
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCommandLine);
+	UNREFERENCED_PARAMETER(nShowCommand);
+
+	//Call the entry point for any console application based on Windows.
+#if !defined(POCO_NO_WSTRING)
+	wmain(__argc, __wargv);
+#else
+	main(__argc, __argv);
+#endif
+}
+#endif //OINI_PLATFORM_WINDOWS
+
+
+
+OINI_NAMESPACE_BEGIN(Oini)
 
 static Application* spApplication = nullptr;
 
-const string APPLICATION_NAME = "Open Ini";
-const string CONFIGURATION_FILE = "config.ini";
-const string LOGGING_FILE = "log.log";
 
-
-
-Application::Application() : wxApp(),
-	mpConfigurationFile(nullptr),
-	mpLogger(nullptr),
-	mPendingFilePath(""),
-	mpWindow(nullptr)
+Application::Application() : Poco::Util::Application()
 {
 	spApplication = this;
 }
 
 Application::~Application()
 {
-	LOG("Shutting down program...");
+	OINI_LOG("Shutting down program...");
+
+	//Free resources used by all opened files.
+	for (std::shared_ptr<FileIni>& pFile : mpIniFiles)
+	{
+		pFile.reset();
+		pFile = nullptr;
+	}
+
+	//Free font resources.
+	for (std::shared_ptr<Font>& pFont : mpFonts)
+	{
+		pFont.reset();
+		pFont = nullptr;
+	}
+
+	//Free resources used by windows.
+	if (mpMainWindow.get() != nullptr)
+	{
+		OINI_LOG("Closing main window...");
+
+		mpMainWindow->Shutdown();
+		mpMainWindow.reset(nullptr);
+	}
 
 	//Stop the measured time.
 	mStopWatch.stop();
 
-	//Free resources used by all opened files.
-	for (int i = 0; i < mpFiles.size(); i++)
-	{
-		if (mpFiles[i].get() != nullptr)
-		{
-			mpFiles[i].reset();
-			mpFiles[i] = nullptr;
-		}
-	}
-
-	if (mpConfigurationFile.get() != nullptr)
-	{
-		mpConfigurationFile = nullptr;
-	}
-
 	//Log an additional empty line.
-	LOG("", true);
+	OINI_LOG("", true);
 
-	mpLogger = nullptr;
+	//Free logger resources.
+	if (mpLogger.get() != nullptr)
+	{
+		mpLogger->Shutdown();
+		mpLogger.reset(nullptr);
+	}
+
 	spApplication = nullptr;
 }
 
@@ -68,12 +106,26 @@ Application::~Application()
 Application* Application::Get()
 {
 	return spApplication;
-};
+}
 
-wxIMPLEMENT_APP(Application);
+void Application::AddOptions(Poco::Util::OptionSet& options)
+{
+	options.addOption(
+		Poco::Util::Option("log", "l", "Enables logging").
+		required(false).
+		repeatable(false));
+}
 
-/*virtual*/
-bool Application::OnInit()
+void Application::HandleOption(const string& name, const string& value)
+{
+	if (name == "log")
+	{
+		//Enable the logging flag.
+		mEnableLogging = true;
+	}
+}
+
+void Application::Run()
 {
 #if defined(OINI_DEBUG_MEMORY_LEAKS) && defined(OINI_PLATFORM_WINDOWS)
 	//Retrieve the state of the debug flag to control the allocation behavior of
@@ -94,17 +146,9 @@ bool Application::OnInit()
 		//Start the time to measure it.
 		mStopWatch.start();
 
-		//Create and get the logger object.
-		mpLogger = &Poco::Logger::get("Logger");
-
-		//Create a file channel assigned to a logging file.
-		Poco::AutoPtr<Poco::FileChannel> pFileChannel(NEW Poco::FileChannel());
-		pFileChannel->setProperty("path", Oini::LOGGING_FILE);
-		pFileChannel->setProperty("rotation", "10 M");
-		pFileChannel->open();
-
-		//Assign the new channel to the logger object.
-		mpLogger->setChannel(pFileChannel);
+		//Create and initialize the logger.
+		mpLogger.reset(OINI_NEW Logger());
+		mpLogger->Initialize();
 	}
 	catch (std::exception& exception)
 	{
@@ -113,175 +157,90 @@ bool Application::OnInit()
 #endif
 
 		std::cerr << exception.what() << std::endl;
+		ErrorCode(Poco::Util::Application::EXIT_IOERR);
 
-		return false;
+		return;
 	}
 
 	try
 	{
-		//Initialize the logging flag.
-#ifdef OINI_CONFIGURATION_DEBUG
+#if defined(OINI_CONFIGURATION_DEBUG)
+		//Always enable the logging flag with debug configuration.
 		mEnableLogging = true;
-#else
-		mEnableLogging = false;
 #endif
 
 		//Log the current date and time.
-		LOG(Poco::DateTimeFormatter::format(Poco::LocalDateTime(),
+		OINI_LOG(Poco::DateTimeFormatter::format(Poco::LocalDateTime(),
 			Poco::DateTimeFormat::HTTP_FORMAT), true);
 
-		bool showWindow = false;
+#if defined(OINI_CONFIGURATION_DEBUG)
+		OINI_LOG("Warning: program is compiled with debug configuration.");
+#endif
 
-		LOG("Parsing command-line arguments...");
+		string commandLine = "";
+		Poco::Util::Application::ArgVec arguments = argv();
+		auto argumentsIterator = arguments.begin();
+		++argumentsIterator;
 
-		if (argc < 2)
+		//Obtain the command-line arguments.
+		while (argumentsIterator != arguments.end())
 		{
-			showWindow = true;
+			commandLine += " " + *argumentsIterator;
+			++argumentsIterator;
+		}
 
-			LOG("No command-line arguments were found.");
+		if (commandLine.empty())
+		{
+			OINI_LOG("No command-line arguments were found.");
 		}
 		else
 		{
-			const wxCmdLineEntryDesc commandLineDescs[] =
-			{
-				{ wxCMD_LINE_SWITCH, "h", "help", "Shows this help list",
-					wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-				{ wxCMD_LINE_OPTION, "f", "file",
-					"Name of the file to load, with its full path" },
-				{ wxCMD_LINE_SWITCH, "l", "log", "Enables logging" },
-				{ wxCMD_LINE_NONE }
-			};
-
-			//Parse command-line arguments.
-			wxCmdLineParser commandLineParser(commandLineDescs, argc, argv);
-
-			showWindow = commandLineParser.Parse(true) == 0;
-
-			if (!showWindow)
-			{
-				LOG("Showing help message for the command-line.");
-			}
-			else
-			{
-				if (!mEnableLogging && commandLineParser.Found(wxT("l")))
-				{
-					mEnableLogging = true;
-
-					//Log the current date and time.
-					LOG(Poco::DateTimeFormatter::format(Poco::LocalDateTime(),
-						Poco::DateTimeFormat::HTTP_FORMAT), true);
-
-					LOG("Parsing command-line arguments...");
-				}
-
-				string arguments = "";
-				for (int i = 1; i < argc; i++)
-				{
-					arguments += " " + argv[i];
-				}
-
-				LOG("The command-line arguments are:" + arguments);
-
-				wxString pendingFilePath;
-				if (commandLineParser.Found(wxT("f"), &pendingFilePath))
-				{
-					mPendingFilePath = pendingFilePath.ToStdString();
-				}
-			}
+			OINI_LOG("The command-line arguments are:" + commandLine);
 		}
 
-		if (showWindow)
-		{
-			LOG("Initializing program...");
+		OINI_LOG("Initializing program...");
 
-			//Log the program compilation mode.
-#ifdef OINI_CONFIGURATION_DEBUG
-			LOG("Program is compiled in debug mode.");
-#else
-			LOG("Program is compiled in release mode.");
-#endif
+		//Log the operating system details.
+		OINI_LOG("OS details: " + Poco::Environment::osName() + "; " +
+			Poco::Environment::osVersion() + "; " +
+			Poco::Environment::osArchitecture());
 
-			//Log the operating system details.
-			LOG("OS details: " + Poco::Environment::osName() + "; " +
-				Poco::Environment::osVersion() + "; " +
-				Poco::Environment::osArchitecture());
+		mCurrentDirectory = Poco::Path::current();
+		OINI_LOG("Current working directory: " + mCurrentDirectory);
 
-			mCurrentDirectory = Poco::Path::current();
+		OINI_LOG("Opening main window...");
 
-			LOG("Current working directory: " + mCurrentDirectory);
+		//Create and initialize the main window.
+		mpMainWindow.reset(OINI_NEW WindowMain());
+		mpMainWindow->Initialize();
 
-			LOG("Loading configurable options...");
-
-			Poco::File configurationFile(mCurrentDirectory +
-				Oini::CONFIGURATION_FILE);
-
-			if (!configurationFile.exists())
-			{
-				LOG("The configuration file doesn't exist; creating it...");
-
-				configurationFile.createFile();
-			}
-
-			//Load the main configuration file.
-			mpConfigurationFile = NEW Poco::Util::IniFileConfiguration(
-				Oini::CONFIGURATION_FILE);
-
-			LOG("Opening main window...");
-
-			//Show the main window of the application.
-			mpWindow = NEW Window();
-			mpWindow->Initialize();
-
-			LOG("Initialization took " + Str(ElapsedTime(), 6) + " seconds.");
-
-			return true;
-		}
+		OINI_LOG("Initialization took " + Str(ElapsedTime(), 6) + " seconds.");
 	}
 	catch (Poco::Exception& exception)
 	{
-		LOG(">>> Error [" + OINI_INFO + "] >>> " + Str(exception.className()) +
-			"; " + exception.message() + "; Code: " + Str(exception.code()));
+		OINI_LOG(">>> Error [" + OINI_INFO + "] >>> " +
+			Str(exception.className()) + "; " + exception.message() +
+			"; Code: " + Str(exception.code()));
 
-		return false;
+		ErrorCode(Poco::Util::Application::EXIT_CONFIG);
+
+		return;
 	}
 	catch (std::exception& exception)
 	{
-		LOG(">>> Error [" + OINI_INFO + "] >>> " + Str(exception.what()));
+		OINI_LOG(">>> Error [" + OINI_INFO + "] >>> " + Str(exception.what()));
 
-		return false;
+		ErrorCode(Poco::Util::Application::EXIT_CONFIG);
+
+		return;
 	}
 
-	return false;
-}
-
-/*virtual*/
-int Application::OnRun()
-{
-	if (mPendingFilePath != "")
+	//Start main loop.
+	while (mpMainWindow->Run())
 	{
-		LOG("Opening pending file...");
-
-		try
-		{
-			OpenFile(mPendingFilePath);
-		}
-		catch (Poco::Exception& exception)
-		{
-			LOG(">>> Error [" + OINI_INFO + "] >>> " +
-				Str(exception.className()) + "; " + exception.message() +
-				"; Code: " + Str(exception.code()));
-
-			ShowErrorDialog(exception.message());
-		}
-		catch (std::exception& exception)
-		{
-			LOG(">>> Error [" + OINI_INFO + "] >>> " + Str(exception.what()));
-
-			ShowErrorDialog(exception.what());
-		}
+		//Sleep for at least a millisecond.
+		Poco::Thread::sleep(1);
 	}
-
-	return wxApp::OnRun();
 }
 
 float Application::ElapsedTime() const
@@ -290,60 +249,75 @@ float Application::ElapsedTime() const
 		static_cast<float>(mStopWatch.resolution());
 }
 
-void Application::Log(const string& message, bool omitTimeStamp) const
+void Application::Log(const string& message, bool omitTimeStamp)
 {
 	if (mEnableLogging)
 	{
-		if (!omitTimeStamp)
-		{
-			mpLogger->information(Poco::DateTimeFormatter::format(
-				Poco::LocalDateTime(), "[%M:%S.%i] ") + message);
-		}
-		else
-		{
-			mpLogger->information(message);
-		}
-
 #if defined(OINI_DEBUG_LOG_TO_DEBUGGER)
 		Poco::Debugger::message("> " + message);
+#endif
+
+		string logMessage = message;
+		if (!omitTimeStamp)
+		{
+			logMessage = Poco::DateTimeFormatter::format(Poco::LocalDateTime(),
+				"[%M:%S.%i] ") + logMessage;
+		}
+
+		mpLogger->Log(logMessage);
+
+#if defined(OINI_CONFIGURATION_DEBUG)
+		mSessionLog += logMessage + '\n';
 #endif
 	}
 }
 
-string Application::ApplicationName() const
+std::shared_ptr<Font> Application::GetFont(const string& identifier)
 {
-	return APPLICATION_NAME;
+	//Search for the font, it might already exist.
+	for (std::shared_ptr<Font>& pFont : mpFonts)
+	{
+		if (pFont->Identifier() == identifier)
+		{
+			return pFont;
+		}
+	}
+
+	//Load the new font.
+	std::shared_ptr<Font> pFont(OINI_NEW Font());
+	pFont->Load(identifier);
+	mpFonts.push_back(pFont);
+
+	return pFont;
 }
 
 void Application::OpenFile(const string& absolutePath)
 {
-	std::shared_ptr<FileIni> pFile(NEW FileIni());
-
-	pFile->Initialize(absolutePath);
-
-	mpFiles.push_back(pFile);
-
-	mpWindow->OpenFile(pFile);
+	//Load the new file.
+	std::shared_ptr<FileIni> pIniFile(OINI_NEW FileIni());
+	pIniFile->Initialize(absolutePath);
+	mpIniFiles.push_back(pIniFile);
 }
 
-void Application::CloseFile(const std::shared_ptr<FileIni> pFile)
+void Application::CloseFile(const std::shared_ptr<class FileIni> pIniFile)
 {
-	for (int i = 0; i < mpFiles.size(); i++)
+	//Search for the file.
+	auto filesIterator = mpIniFiles.begin();
+	while (filesIterator != mpIniFiles.end())
 	{
-		if (mpFiles[i].get() == pFile.get())
+		if ((*filesIterator).get() == pIniFile.get())
 		{
-			mpFiles[i].reset();
-			mpFiles[i] = nullptr;
+			//Free resources.
+			(*filesIterator).reset();
+			(*filesIterator) = nullptr;
+
+			//Delete from files array.
+			mpIniFiles.erase(filesIterator);
+			return;
 		}
+
+		++filesIterator;
 	}
 }
 
-void Application::ShowErrorDialog(const string& message) const
-{
-	wxMessageDialog* pDialog = NEW wxMessageDialog(nullptr,
-		wxString(message), wxT("Error"), wxICON_ERROR | wxOK);
-
-	pDialog->ShowModal();
-}
-
-NAMESPACE_END //Oini
+OINI_NAMESPACE_END(Oini)

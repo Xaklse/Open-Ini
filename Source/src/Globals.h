@@ -4,8 +4,8 @@
 
 
 //Defines the namespace macros.
-#define NAMESPACE_BEGIN(x) namespace x{
-#define NAMESPACE_END }
+#define OINI_NAMESPACE_BEGIN(nameSpace) namespace nameSpace{
+#define OINI_NAMESPACE_END(nameSpace) }
 
 //Defines the solution configuration.
 #if defined(_DEBUG)
@@ -17,9 +17,9 @@
 //Defines the solution platform.
 #if defined(_WIN32) || defined(_WIN64)
 	#define OINI_PLATFORM_WINDOWS
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) && defined(__MACH__)
 	#define OINI_PLATFORM_MACOSX
-#elif defined(__linux__) || defined(__linux) || defined(linux)
+#elif defined(__linux__)
 	#define OINI_PLATFORM_LINUX
 #else
 	#define OINI_PLATFORM_UNDETERMINED
@@ -59,6 +59,9 @@
 //Includes the string class of the Standard Template Library (STL).
 #include <string>
 
+//Includes the dynamic array container of the Standard Template Library (STL).
+#include <vector>
+
 #if defined(OINI_DEBUG_MEMORY_LEAKS) && defined(OINI_PLATFORM_WINDOWS)
 	//Keeps track of memory allocation and deallocation.
 	#include <crtdbg.h>
@@ -67,6 +70,7 @@
 
 
 //Includes some Boost header files.
+#include "Boost/algorithm/clamp.hpp"
 #include "Boost/lexical_cast.hpp"
 #include "Boost/utility.hpp"
 
@@ -78,16 +82,16 @@
 #endif
 
 //Includes some POCO header files.
-#include "Poco/AutoPtr.h"
+#include "Poco/DateTimeFormat.h"
 #include "Poco/DateTimeFormatter.h"
-#include "Poco/Logger.h"
 #include "Poco/NumberFormatter.h"
 #include "Poco/StopWatch.h"
 #include "Poco/String.h"
 #include "Poco/Types.h"
-#include "Poco/Util/IniFileConfiguration.h"
 
 
+
+OINI_NAMESPACE_BEGIN(Oini)
 
 typedef Poco::Int8 int8;
 typedef Poco::Int16 int16;
@@ -106,15 +110,12 @@ typedef double float64;
 typedef std::string string;
 
 
-
-NAMESPACE_BEGIN(Oini)
-
 static string Str(bool data)
 {
 	return data ? "true" : "false";
 }
 
-static string Str(float data,uint fractionalDigits = 3)
+static string Str(float data, uint fractionalDigits = 3u)
 {
 	return Poco::NumberFormatter::format(data, fractionalDigits);
 }
@@ -125,20 +126,20 @@ static string Str(const T& data)
 	return boost::lexical_cast<string>(data);
 }
 
-NAMESPACE_END //Oini
+OINI_NAMESPACE_END(Oini)
 
 
 
 #if defined(OINI_DEBUG_MEMORY_LEAKS) && defined(OINI_PLATFORM_WINDOWS)
-	#define NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+	#define OINI_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #else
-	#define NEW new
+	#define OINI_NEW new
 #endif
 
+#define OINI_APP Oini::Application::Get
 #define OINI_FILE Str(__FILE__).substr((Str(__FILE__).find_last_of("/\\")) + 1)
 #define OINI_INFO string() + "File: " + OINI_FILE + "; Line: " + Str(__LINE__)
-
-#define LOG Oini::Application::Get()->Log
+#define OINI_LOG OINI_APP()->Log
 
 
 #endif //OINI_GLOBALS_H

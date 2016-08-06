@@ -8,11 +8,11 @@
 #include "Poco/Exception.h"
 
 
-NAMESPACE_BEGIN(Oini)
+OINI_NAMESPACE_BEGIN(Oini)
 
 POCO_DECLARE_EXCEPTION(,Exception,Poco::Exception)
 
-NAMESPACE_END //Oini
+OINI_NAMESPACE_END(Oini)
 
 
 #endif //OINI_EXCEPTION_H

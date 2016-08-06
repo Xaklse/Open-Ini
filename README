@@ -9,9 +9,11 @@ Right now it only opens text files and shows their content.
 
 
 Uses the following libraries placed in:
-...\Source\3rdp\Boost
-...\Source\3rdp\Poco
-...\Source\3rdp\WxWidgets
+...\Source\3rdp\Boost   (boost.org)
+...\Source\3rdp\ImGui   (github.com/ocornut/imgui)
+...\Source\3rdp\POCO    (pocoproject.org)
+...\Source\3rdp\SFML    (sfml-dev.org)
+...\Source\3rdp\TinyFD  (sourceforge.net/projects/tinyfiledialogs/files)
 
 
 Application.cpp has the application entry point.
@@ -23,13 +25,16 @@ DONE:
 - Memory leak detection.
 - Exception handling.
 - Command-line arguments support.
-- Open/close .ini file.
+- Open .ini file.
 
 
 TODO:
-- Smart presentation of contents of .ini file.
+- Smarter presentation of contents of .ini file.
+- Tabs support.
 - Save .ini file.
 - Undo/redo change.
 - Show meta-data associated to field.
 - Configurable settings.
 - Instant search.
+- Close .ini file.
+- Colors & styles.

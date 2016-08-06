@@ -1,144 +1,148 @@
 
 #include "Window.h"
 #include "Application.h"
-#include "Exception.h"
-#include "FileIni.h"
-#include "Notebook.h"
-
-#include "wx/artprov.h"
+#include "Notification.h"
 
 
-NAMESPACE_BEGIN(Oini)
+OINI_NAMESPACE_BEGIN(Oini)
 
-Window::Window() : wxFrame(),
-	mpNotebook(nullptr)
+const uint REDRAW_FRAMES = 10u;
+
+
+Window::Window() : SfWindow()
 {
 }
 
 Window::~Window()
 {
-	mUiManager.UnInit();
-}
-
-void Window::Initialize()
-{
-	//Create the window.
-	if (!Create(nullptr, wxID_ANY, wxEmptyString, wxDefaultPosition,
-		wxSize(600, 450)))
+	if (isOpen())
 	{
-		throw Exception("Window creation failed");
+		Shutdown();
 	}
+}
 
-	//Tell the UI manager to manage this window.
-	mUiManager.SetManagedWindow(this);
+/*virtual*/ void Window::Initialize()
+{
+	Create(800u, 600u, "Title");
+	ForceRedraw(true);
+}
 
-	//Change the title of the window.
-	SetTitle(wxString(Application::Get()->ApplicationName()));
-
-	//Set the minimum dimensions of the window.
-	SetMinSize(wxSize(600, 450));
-
-	//Add "File" menu.
-	wxMenu* pMenuFile = NEW wxMenu();
-	pMenuFile->Append(wxID_OPEN);
-	pMenuFile->Append(wxID_EXIT);
-
-	//Add "Help" menu.
-	wxMenu* pMenuHelp = NEW wxMenu();
-	pMenuHelp->Append(wxID_ABOUT);
-
-	//Add previous menus to the main menu bar.
-	wxMenuBar* pMenuBar = NEW wxMenuBar();
-	pMenuBar->Append(pMenuFile, wxT("&File"));
-	pMenuBar->Append(pMenuHelp, wxT("&Help"));
-	SetMenuBar(pMenuBar);
-
-	//Add a notebook that holds pages.
-	mpNotebook = NEW Notebook();
-	mpNotebook->Initialize(this);
-
-	if (!mUiManager.AddPane(mpNotebook,
-		wxAuiPaneInfo().Name(wxT("NotebookPane")).CenterPane().PaneBorder(
-		false)))
+/*virtual*/ bool Window::Run()
+{
+	//Handle window events.
+	sf::Event event;
+	while (pollEvent(event))
 	{
-		throw Exception("Notebook pane addition failed");
-	}
-
-	//Show and center the window.
-	Show();
-	Centre();
-
-	//Commit all changes made to the UI manager.
-	mUiManager.Update();
-}
-
-wxBEGIN_EVENT_TABLE(Window, wxFrame)
-	EVT_MENU(wxID_ABOUT, Window::OnAbout)
-	EVT_MENU(wxID_OPEN, Window::OnOpen)
-	EVT_MENU(wxID_EXIT, Window::OnExit)
-	EVT_MIDDLE_DOWN(Window::OnMouseMiddleClick)
-wxEND_EVENT_TABLE()
-
-void Window::OnAbout(wxCommandEvent& event)
-{
-	wxMessageBox(wxT("This is about About"), wxT("About"),
-		wxICON_INFORMATION | wxOK);
-}
-
-void Window::OnExit(wxCommandEvent& event)
-{
-	Close(true);
-}
-
-void Window::OnMouseMiddleClick(wxMouseEvent& event)
-{
-	//Disable Ctrl-Alt-middle click.
-}
-
-void Window::OnOpen(wxCommandEvent& event)
-{
-	wxFileDialog fileDialog(this, wxT("Open INI file"), wxEmptyString,
-		wxEmptyString, "INI files (*.ini)|*.ini",
-		wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
-
-	if (fileDialog.ShowModal() == wxID_OK)
-	{
-		LOG("Opening file on demand...");
-
-		try
+		//Catch the window close event.
+		if (event.type == sf::Event::Closed)
 		{
-			//Get file paths.
-			wxArrayString paths;
-			fileDialog.GetPaths(paths);
-
-			for (size_t i = 0; i < paths.GetCount(); i++)
+			mKeepOpen = false;
+		}
+		else
+		{
+			//Catch the window resize event.
+			if (event.type == sf::Event::Resized)
 			{
-				//Get an absolute path encoded with UTF-8.
-				const string absolutePath = paths[i].ToUTF8();
+				OINI_LOG("Resizing rendering area to " + Str(event.size.width) +
+					"x" + Str(event.size.height) + "...");
 
-				Application::Get()->OpenFile(absolutePath);
+				//Resize the active 2D view.
+				sf::FloatRect renderArea(0.0f, 0.0f,
+					static_cast<float>(event.size.width),
+					static_cast<float>(event.size.height));
+				setView(sf::View(renderArea));
+			}
+
+			//Pass event.
+			HandleEvent(event);
+		}
+
+		//Request graphics to be redrawn.
+		ForceRedraw(true);
+	}
+
+	//Handle internal events.
+	while (!mNotifications.empty())
+	{
+		//Dequeue the next pending notification.
+		Poco::AutoPtr<Poco::Notification> pNotification(
+			mNotifications.dequeueNotification());
+		auto pNotification2 = dynamic_cast<Notification*>(pNotification.get());
+
+		if (pNotification2 != nullptr)
+		{
+			//Catch the exit program notification.
+			if (pNotification2->IsType(Notification::Type::EXIT))
+			{
+				mKeepOpen = false;
+			}
+			else
+			{
+				//Pass notification.
+				HandleNotification(pNotification2);
 			}
 		}
-		catch (Poco::Exception& exception)
-		{
-			LOG(">>> Error [" + OINI_INFO + "] >>> " +
-				Str(exception.className()) + "; " + exception.message() +
-				"; Code: " + Str(exception.code()));
 
-			Application::Get()->ShowErrorDialog(exception.message());
-		}
-		catch (std::exception& exception)
-		{
-			LOG(">>> Error [" + OINI_INFO + "] >>> " + Str(exception.what()));
-
-			Application::Get()->ShowErrorDialog(exception.what());
-		}
+		//Request graphics to be redrawn.
+		ForceRedraw(true);
 	}
+
+	if (mRedrawGraphics > 0u)
+	{
+		--mRedrawGraphics;
+
+		//Activate the window as the current target for rendering.
+		setActive(true);
+
+		//Clear the window with a solid color.
+		clear(mBackgroundColor);
+
+		//Draw stuff.
+		DrawGraphics();
+
+		//Update the window.
+		display();
+	}
+
+	return mKeepOpen;
 }
 
-void Window::OpenFile(const std::shared_ptr<FileIni> pFile)
+/*virtual*/ void Window::Shutdown()
 {
-	mpNotebook->OpenPage(pFile);
+	//Clear the notifications queue.
+	mNotifications.clear();
+	mNotifications.wakeUpAll();
+
+	//Release resources.
+	close();
 }
 
-NAMESPACE_END //Oini
+void Window::Close()
+{
+	mKeepOpen = false;
+}
+
+/*virtual*/ void Window::Create(uint width, uint height, const string& title)
+{
+	//Avoid creation of a window with unreasonable size.
+	width = boost::algorithm::clamp(width, 200u,
+		sf::VideoMode::getDesktopMode().width - 50u);
+	height = boost::algorithm::clamp(height, 200u,
+		sf::VideoMode::getDesktopMode().height - 50u);
+
+	//Create the actual window.
+	super::Create(width, height, title);
+
+	//Limit frame-rate to 60 FPS.
+	LimitFramerate(60u);
+
+	//Deactivate the window as the current target for rendering.
+	Deactivate();
+}
+
+void Window::ForceRedraw(bool forceRedraw)
+{
+	mRedrawGraphics = forceRedraw ? REDRAW_FRAMES : 0u;
+}
+
+OINI_NAMESPACE_END(Oini)

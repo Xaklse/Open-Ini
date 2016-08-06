@@ -41,8 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\3rdp\Boost;..\3rdp\Poco\Foundation\include;..\3rdp\Poco\Util\include;..\3rdp\WxWidgets\include;..\3rdp\WxWidgets\include\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>..\3rdp\Poco\lib;..\3rdp\WxWidgets\lib\vc_lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\3rdp\Boost;..\3rdp\ImGui;..\3rdp\TinyFD;..\3rdp\POCO\Foundation\include;..\3rdp\POCO\Util\include;..\3rdp\SFML\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\3rdp\POCO\lib;..\3rdp\SFML\lib;$(LibraryPath)</LibraryPath>
     <SourcePath>..\src;$(SourcePath)</SourcePath>
     <OutDir>$(SolutionDir)..\..\Compiled\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\..\Temp\$(PlatformName)$(Configuration)\</IntDir>
@@ -50,11 +50,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\3rdp\Boost;..\3rdp\Poco\Foundation\include;..\3rdp\Poco\Util\include;..\3rdp\WxWidgets\include;..\3rdp\WxWidgets\include\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>..\3rdp\Poco\lib;..\3rdp\WxWidgets\lib\vc_lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\3rdp\Boost;..\3rdp\ImGui;..\3rdp\TinyFD;..\3rdp\POCO\Foundation\include;..\3rdp\POCO\Util\include;..\3rdp\SFML\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\3rdp\POCO\lib;..\3rdp\SFML\lib;$(LibraryPath)</LibraryPath>
     <SourcePath>..\src;$(SourcePath)</SourcePath>
     <OutDir>$(SolutionDir)..\..\Compiled\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)..\..\Temp\$(ProjectName)$(PlatformName)$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)..\..\Temp\$(PlatformName)$(Configuration)\</IntDir>
     <TargetName>OpenIni$(PlatformName)$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -63,12 +63,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>POCO_STATIC;__WXDEBUG__;__WXMSW__;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>POCO_STATIC;SFML_STATIC;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>PocoFoundationmdd.lib;PocoUtilmdd.lib;wxmsw30ud_core.lib;wxbase30ud.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PocoFoundationmdd.lib;PocoUtilmdd.lib;freetype.lib;jpeg.lib;opengl32.lib;winmm.lib;sfml-graphics-s-d.lib;sfml-system-s-d.lib;sfml-window-s-d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,32 +80,58 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>POCO_STATIC;__WXMSW__;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>POCO_STATIC;SFML_STATIC;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>PocoFoundationmd.lib;PocoUtilmd.lib;wxmsw30u_core.lib;wxbase30u.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PocoFoundationmd.lib;PocoUtilmd.lib;freetype.lib;jpeg.lib;opengl32.lib;winmm.lib;sfml-graphics-s.lib;sfml-system-s.lib;sfml-window-s.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\3rdp\ImGui\imgui.cpp" />
+    <ClCompile Include="..\3rdp\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="..\3rdp\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="..\3rdp\TinyFD\tinyfiledialogs.c" />
     <ClCompile Include="..\src\Application.cpp" />
     <ClCompile Include="..\src\Exception.cpp" />
     <ClCompile Include="..\src\FileIni.cpp" />
-    <ClCompile Include="..\src\Notebook.cpp" />
-    <ClCompile Include="..\src\Page.cpp" />
+    <ClCompile Include="..\src\Font.cpp" />
+    <ClCompile Include="..\src\Logger.cpp" />
+    <ClCompile Include="..\src\Notification.cpp" />
+    <ClCompile Include="..\src\Popup.cpp" />
+    <ClCompile Include="..\src\Resource.cpp" />
+    <ClCompile Include="..\src\SfFont.cpp" />
+    <ClCompile Include="..\src\SfObject.cpp" />
+    <ClCompile Include="..\src\SfWindow.cpp" />
     <ClCompile Include="..\src\Window.cpp" />
+    <ClCompile Include="..\src\WindowMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\3rdp\ImGui\imconfig.h" />
+    <ClInclude Include="..\3rdp\ImGui\imgui.h" />
+    <ClInclude Include="..\3rdp\ImGui\imgui_internal.h" />
+    <ClInclude Include="..\3rdp\ImGui\stb_rect_pack.h" />
+    <ClInclude Include="..\3rdp\ImGui\stb_textedit.h" />
+    <ClInclude Include="..\3rdp\ImGui\stb_truetype.h" />
+    <ClInclude Include="..\3rdp\TinyFD\tinyfiledialogs.h" />
     <ClInclude Include="..\src\Application.h" />
     <ClInclude Include="..\src\Exception.h" />
     <ClInclude Include="..\src\FileIni.h" />
+    <ClInclude Include="..\src\Font.h" />
     <ClInclude Include="..\src\Globals.h" />
-    <ClInclude Include="..\src\Notebook.h" />
-    <ClInclude Include="..\src\Page.h" />
+    <ClInclude Include="..\src\Logger.h" />
+    <ClInclude Include="..\src\Notification.h" />
+    <ClInclude Include="..\src\Popup.h" />
+    <ClInclude Include="..\src\Resource.h" />
+    <ClInclude Include="..\src\SfFont.h" />
+    <ClInclude Include="..\src\SfObject.h" />
+    <ClInclude Include="..\src\SfWindow.h" />
     <ClInclude Include="..\src\Window.h" />
+    <ClInclude Include="..\src\WindowMain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

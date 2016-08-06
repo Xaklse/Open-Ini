@@ -1,60 +1,137 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Archivos de código fuente">
+    <Filter Include="imgui">
+      <UniqueIdentifier>{7e83d0e8-dd98-4a6c-87b8-189e647c6ef8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tinyfd">
+      <UniqueIdentifier>{672eb7fc-1837-41dc-9f62-e4199bb69a41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPP files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Archivos de encabezado">
+    <Filter Include="H files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Archivos de recursos">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Application.cpp">
-      <Filter>Archivos de código fuente</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Window.cpp">
-      <Filter>Archivos de código fuente</Filter>
+      <Filter>CPP files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Exception.cpp">
-      <Filter>Archivos de código fuente</Filter>
+      <Filter>CPP files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\FileIni.cpp">
-      <Filter>Archivos de código fuente</Filter>
+      <Filter>CPP files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Notebook.cpp">
-      <Filter>Archivos de código fuente</Filter>
+    <ClCompile Include="..\src\Window.cpp">
+      <Filter>CPP files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Page.cpp">
-      <Filter>Archivos de código fuente</Filter>
+    <ClCompile Include="..\src\WindowMain.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Font.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Resource.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdp\ImGui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdp\ImGui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdp\ImGui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Notification.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SfObject.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SfWindow.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Logger.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SfFont.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Popup.cpp">
+      <Filter>CPP files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdp\TinyFD\tinyfiledialogs.c">
+      <Filter>tinyfd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Application.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Window.h">
-      <Filter>Archivos de encabezado</Filter>
+      <Filter>H files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Globals.h">
-      <Filter>Archivos de encabezado</Filter>
+      <Filter>H files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Exception.h">
-      <Filter>Archivos de encabezado</Filter>
+      <Filter>H files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\FileIni.h">
-      <Filter>Archivos de encabezado</Filter>
+      <Filter>H files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Notebook.h">
-      <Filter>Archivos de encabezado</Filter>
+    <ClInclude Include="..\src\Window.h">
+      <Filter>H files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Page.h">
-      <Filter>Archivos de encabezado</Filter>
+    <ClInclude Include="..\src\WindowMain.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Font.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\stb_rect_pack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\stb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\ImGui\stb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Notification.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SfObject.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SfWindow.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Logger.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SfFont.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Popup.h">
+      <Filter>H files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdp\TinyFD\tinyfiledialogs.h">
+      <Filter>tinyfd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

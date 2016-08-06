@@ -5,8 +5,10 @@
 
 #include "Globals.h"
 
+#include "Poco/Util/IniFileConfiguration.h"
 
-NAMESPACE_BEGIN(Oini)
+
+OINI_NAMESPACE_BEGIN(Oini)
 
 class FileIni : public Poco::Util::AbstractConfiguration,
 	private boost::noncopyable
@@ -14,30 +16,6 @@ class FileIni : public Poco::Util::AbstractConfiguration,
 public:
 	FileIni();
 	virtual ~FileIni();
-
-public:
-	virtual void Initialize(const string& absolutePath);
-
-public:
-	virtual string TextLine(uint index) const;
-	virtual uint TextLines() const;
-
-private:
-	void enumerate(const std::string& key,
-		Poco::Util::AbstractConfiguration::Keys& range) const override;
-	bool getRaw(const std::string& key, std::string& value) const override;
-	void setRaw(const std::string& key, const std::string& value) override;
-
-public:
-	string FileName() const { return mFileName; }
-	string FullPath() const { return mFullPath; }
-	string LineSeparator() const { return mLineSeparator; }
-
-protected:
-	string mFileName;
-	string mFullPath;
-	string mLineSeparator;
-	string mOriginalText;
 
 protected:
 	struct LineBounds
@@ -56,7 +34,7 @@ protected:
 		EDITED
 	};
 
-protected:
+public:
 	enum class LineType : uint8
 	{
 		EMPTY,
@@ -77,12 +55,44 @@ protected:
 		LineType Type;
 	};
 
+public:
+	void Initialize(const string& absolutePath);
+
+public:
+	string TextLine(uint32 index) const;
+	uint32 TextLines() const;
+	LineType TextLineType(uint32 index) const;
+
+public:
+	string TextLineName(uint32 index) const;
+	string TextLineValue(uint32 index) const;
+
+public:
+	void NumberSignAsComment(bool set);
+
+private:
+	void enumerate(const std::string& key,
+		Poco::Util::AbstractConfiguration::Keys& range) const override;
+	bool getRaw(const std::string& key, std::string& value) const override;
+	void setRaw(const std::string& key, const std::string& value) override;
+
+public:
+	string FileName() const { return mFileName; }
+	string FullPath() const { return mFullPath; }
+	string LineSeparator() const { return mLineSeparator; }
+
+protected:
+	string mFileName = "";
+	string mFullPath = "";
+	string mLineSeparator = "";
+	string mOriginalText = "";
+
 protected:
 	std::vector<Line> mLines;
 	std::vector<string> mStrings;
 };
 
-NAMESPACE_END //Oini
+OINI_NAMESPACE_END(Oini)
 
 
 #endif //OINI_FILE_INI_H
